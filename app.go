@@ -85,11 +85,20 @@ func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := getProducts(a.DB)
+	if err != nil {
+		response := map[string]string{"Error": err.Error()}
+		payload, _ := json.Marshal(response)
 
-	response, _ := json.Marshal([]string{})
+		w.Header().Set("Content-Type", "application-json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(payload)
+	}
+
+	payload, _ := json.Marshal(products)
 	w.Header().Set("Content-Type", "application-json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(response)
+	w.Write(payload)
 }
 
 func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
@@ -163,4 +172,31 @@ func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
 	w.Write(updatedProduct)
 }
 
-func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {}
+func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		errorMessage := map[string]string{"Error": "Invalid ID parameter"}
+		payload, _ := json.Marshal(errorMessage)
+
+		w.Header().Set("Content-Type", "application-json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(payload)
+	}
+
+	product := product{ID: id}
+
+	if err := product.deleteProduct(a.DB); err != nil {
+		errorMessage := map[string]string{"Error": err.Error()}
+		payload, _ := json.Marshal(errorMessage)
+
+		w.Header().Set("Content-Type", "application-json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(payload)
+	}
+
+	w.Header().Set("Content-Type", "application-json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Success"))
+
+}

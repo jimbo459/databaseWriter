@@ -62,6 +62,26 @@ func TestGetNonExistentProduct(t *testing.T) {
 
 }
 
+func TestGetProducts(t *testing.T) {
+	clearTable()
+	addProducts(5)
+
+	req, _ := http.NewRequest("GET", "/products", nil)
+	response := executeRequest(req)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	products := []product{}
+	json.Unmarshal(response.Body.Bytes(), &products)
+
+	fmt.Printf("Response body: %v", products)
+
+	if body := response.Body.String(); len(body) != 5 {
+		t.Errorf("Expected number of returned products to equal 5, intead got %v", len(body))
+	}
+
+}
+
 func TestCreateProduct(t *testing.T) {
 	clearTable()
 
@@ -132,26 +152,21 @@ func TestUpdateProduct(t *testing.T) {
 
 }
 
-// func TestDeleteProduct(t *testing.T) {
-// 	clearTable()
-// 	addProducts(1)
+func TestDeleteProduct(t *testing.T) {
+	clearTable()
+	addProducts(1)
 
-// 	req, _ := http.NewRequest("GET", "/product/1", nil)
-// 	response := executeRequest(req)
+	req, _ := http.NewRequest("DELETE", "/product/1", nil)
+	response := executeRequest(req)
 
-// 	checkResponseCode(t, http.StatusOK, response.Code)
+	checkResponseCode(t, http.StatusOK, response.Code)
 
-// 	req, _ = http.NewRequest("DELETE", "/product/1", nil)
-// 	response = executeRequest(req)
+	req, _ = http.NewRequest("GET", "/product/1", nil)
+	response = executeRequest(req)
 
-// 	checkResponseCode(t, http.StatusOK, response.Code)
+	checkResponseCode(t, http.StatusNotFound, response.Code)
 
-// 	req, _ = http.NewRequest("GET", "/product/1", nil)
-// 	response = executeRequest(req)
-
-// 	checkResponseCode(t, http.StatusNotFound, response.Code)
-
-// }
+}
 
 func addProducts(count int) {
 	if count < 1 {
